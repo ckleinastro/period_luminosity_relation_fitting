@@ -34,7 +34,7 @@ burn_in_traces_dict = {}
 middle_traces_dict = {}
 converged_traces_dict = {}
 
-variable_names = ["Intrinsic Scatter [mag]", r"$M_0$", r"$\alpha$", r"$E(B-V)$"]
+variable_names = [r"$\sigma_{\rm intrinsic}$", r"$M_0$", r"$\alpha$", r"$E(B-V)$"]
 plot_names = ["sigma_trace", "M_0_trace", "alpha_trace", "ebv_trace"]
 
 
@@ -165,7 +165,7 @@ for t in trace_run_nums:
 
 
 y_major_steps = array([0.01, 0.03, 0.4, 0.02])
-x_major_steps = array([20, 10, 1, 20])*7
+x_major_steps = array([20, 10, 1, 20])
 
 
 for n in range(len(plot_names)):
@@ -187,9 +187,9 @@ for n in range(len(plot_names)):
     a = ax1BurnHist.hist(flattened_burn_in_traces, bins=100, range=hist_range, normed=True, histtype="stepfilled", orientation="horizontal", color="red", alpha=1.0)
     
     for m in range(len(burn_in_traces)):
-        ax1Trace.scatter(arange(10000), burn_in_traces[m], color="red", alpha=0.05, lw=0, s=1)
-        ax1Trace.scatter(arange(10000, 50000), middle_traces[m], color="green", alpha=0.05, lw=0, s=1)
-        ax1Trace.scatter(arange(50000, 100000), converged_traces[m], color="blue", alpha=0.05, lw=0, s=1)
+        ax1Trace.scatter(arange(10000), burn_in_traces[m], color="red", alpha=0.03, lw=0, s=1)
+        ax1Trace.scatter(arange(10000, 50000), middle_traces[m], color="green", alpha=0.03, lw=0, s=1)
+        ax1Trace.scatter(arange(50000, 100000), converged_traces[m], color="blue", alpha=0.03, lw=0, s=1)
 
     b = ax1ConvHist.hist(flattened_converged_traces, bins=100, range=hist_range, normed=True, histtype="stepfilled", orientation="horizontal", color="blue", alpha=1.0)
 
