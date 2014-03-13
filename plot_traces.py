@@ -164,13 +164,13 @@ for t in trace_run_nums:
 
 
 
-y_major_steps = array([0.01, 0.03, 0.4, 0.02])
+y_major_steps = array([0.02, 0.03, 0.4, 0.02])
 x_major_steps = array([20, 10, 1, 20])
 
 
 for n in range(len(plot_names)):
 
-    fig = plt.figure(figsize=(7, 2.5))
+    fig = plt.figure(figsize=(7, 1.75))
     ax1BurnHist = fig.add_subplot(1,3,1)
     ax1Trace = fig.add_subplot(1,3,2)
     ax1ConvHist = fig.add_subplot(1,3,3)
@@ -245,11 +245,20 @@ for n in range(len(plot_names)):
 
 
     # pos =         [left, bottom, width, height]
-    ax1BurnHist.set_position([  0.095,                      0.18,   0.145,   0.79])
-    ax1Trace.set_position([     0.095+0.145+0.02,            0.18,   0.56,    0.79])
-    ax1ConvHist.set_position([  0.095+0.145+0.02+0.56+0.02,  0.18,   0.145,   0.79])
+    ax1BurnHist.set_position([  0.095,                      0.25,   0.145,   0.735])
+    ax1Trace.set_position([     0.095+0.145+0.02,            0.25,   0.56,    0.735])
+    ax1ConvHist.set_position([  0.095+0.145+0.02+0.56+0.02,  0.25,   0.145,   0.735])
 
 
     canvas = FigureCanvas(fig)
     canvas.print_figure(plot_dir + plot_names[n] + ".png" , dpi=300)
     close("all")
+
+
+
+import cPickle as pickle
+pickle.dump( burn_in_traces_dict, open( "burn_in_traces.p", "wb" ) )
+pickle.dump( middle_traces_dict, open( "middle_traces.p", "wb" ) )
+pickle.dump( converged_traces_dict, open( "converged_traces.p", "wb" ) )
+
+
