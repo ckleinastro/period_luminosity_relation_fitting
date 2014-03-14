@@ -7,8 +7,11 @@ import matplotlib
 from matplotlib.ticker import NullFormatter
 from numpy import array, log10, loadtxt, arange
 from matplotlib.ticker import MaxNLocator
-
+import cPickle as pickle
 import sys
+
+
+reload_pickles = False
 
 plot_dir = "plots/"
 
@@ -34,18 +37,13 @@ burn_in_traces_dict = {}
 middle_traces_dict = {}
 converged_traces_dict = {}
 
-variable_names = [r"$\sigma_{\rm intrinsic}$", r"$M_0$", r"$\alpha$", r"$E(B-V)$"]
-plot_names = ["sigma_trace", "M_0_trace", "alpha_trace", "ebv_trace"]
+variable_names = [r"$\sigma_{\rm intrinsic}$", r"$M_0$", r"$\alpha$", r"$E(B-V)$", r"$\mu$"]
+plot_names = ["sigma_trace", "M_0_trace", "alpha_trace", "ebv_trace", "mu_trace"]
 
 
 
 nullfmt = NullFormatter()
 
-
-for plot_name in plot_names:
-    burn_in_traces_dict[plot_name] = []
-    middle_traces_dict[plot_name] = []
-    converged_traces_dict[plot_name] = []
 
 
 test_names = array(['AACMi', 'ABUMa', 'AEBoo', 'AFVel', 'AFVir', 'AMTuc', 'AMVir',
@@ -121,52 +119,87 @@ ebv_color_excess = array(ebv_color_excess, dtype=extinction_dtype)
 
 
 
+if reload_pickles:
+    burn_in_traces_dict = pickle.load( open( "trace_plotting_data/burn_in_traces.p", "rb" ) )
+    middle_traces_dict = pickle.load( open( "trace_plotting_data/middle_traces.p", "rb" ) )
+    converged_traces_dict = pickle.load( open( "trace_plotting_data/converged_traces.p", "rb" ) )
 
-for t in trace_run_nums:
-    plr_db_num = plr_db_prefix + "_1" + str(t)
+if not reload_pickles:
+    for plot_name in plot_names:
+        burn_in_traces_dict[plot_name] = []
+        middle_traces_dict[plot_name] = []
+        converged_traces_dict[plot_name] = []
+    for t in trace_run_nums:
+        plr_db_num = plr_db_prefix + "_1" + str(t)
 
-    M = pymc.database.pickle.load('/Volumes/Extra_HDD/Research/Multiband_PLR_Fitting/plr_' + plr_db_num + '.pickle')
+        M = pymc.database.pickle.load('/Volumes/Extra_HDD/Research/Multiband_PLR_Fitting/plr_' + plr_db_num + '.pickle')
 
-    n_samples = M.M_0.gettrace().shape[0]
-    n_samples_analysis = int(n_samples/2.0)
+        n_samples = M.M_0.gettrace().shape[0]
+        n_samples_analysis = int(n_samples/2.0)
 
-    # restrict to H band
-    band_num = 8
-    band = band_list[band_num]
+        # restrict to H band
+        band_num = 8
+        band = band_list[band_num]
 
-    full_sigma_trace = M.sigma_by_band.gettrace()[:][:,band_num]
-    full_M_0_trace = M.M_0.gettrace()[:][:,band_num]
-    full_alpha_trace = M.alpha.gettrace()[:][:,band_num]
+        full_sigma_trace = M.sigma_by_band.gettrace()[:][:,band_num]
+        full_M_0_trace = M.M_0.gettrace()[:][:,band_num]
+        full_alpha_trace = M.alpha.gettrace()[:][:,band_num]
 
-    star_num = where(all_names=="ABUMa")[0]
-    full_ebv_trace = M.EBV.gettrace()[:][:,star_num]
+        star_num = where(all_names=="ABUMa")[0]
+        full_ebv_trace = M.EBV.gettrace()[:][:,star_num]
+        full_mu_trace = M.mus.gettrace()[:][:,star_num]
 
-    burn_in_traces_dict["sigma_trace"].append(full_sigma_trace[:10000])
-    middle_traces_dict["sigma_trace"].append(full_sigma_trace[10000:50000])
-    converged_traces_dict["sigma_trace"].append(full_sigma_trace[50000:])
+        burn_in_traces_dict["sigma_trace"].append(full_sigma_trace[:10000])
+        middle_traces_dict["sigma_trace"].append(full_sigma_trace[10000:50000])
+        converged_traces_dict["sigma_trace"].append(full_sigma_trace[50000:])
 
-    burn_in_traces_dict["M_0_trace"].append(full_M_0_trace[:10000])
-    middle_traces_dict["M_0_trace"].append(full_M_0_trace[10000:50000])
-    converged_traces_dict["M_0_trace"].append(full_M_0_trace[50000:])
+        burn_in_traces_dict["M_0_trace"].append(full_M_0_trace[:10000])
+        middle_traces_dict["M_0_trace"].append(full_M_0_trace[10000:50000])
+        converged_traces_dict["M_0_trace"].append(full_M_0_trace[50000:])
 
-    burn_in_traces_dict["alpha_trace"].append(full_alpha_trace[:10000])
-    middle_traces_dict["alpha_trace"].append(full_alpha_trace[10000:50000])
-    converged_traces_dict["alpha_trace"].append(full_alpha_trace[50000:])
+        burn_in_traces_dict["alpha_trace"].append(full_alpha_trace[:10000])
+        middle_traces_dict["alpha_trace"].append(full_alpha_trace[10000:50000])
+        converged_traces_dict["alpha_trace"].append(full_alpha_trace[50000:])
 
-    burn_in_traces_dict["ebv_trace"].append(full_ebv_trace[:10000])
-    middle_traces_dict["ebv_trace"].append(full_ebv_trace[10000:50000])
-    converged_traces_dict["ebv_trace"].append(full_ebv_trace[50000:])
+        burn_in_traces_dict["ebv_trace"].append(full_ebv_trace[:10000])
+        middle_traces_dict["ebv_trace"].append(full_ebv_trace[10000:50000])
+        converged_traces_dict["ebv_trace"].append(full_ebv_trace[50000:])
 
-
-
-
-
-
+        burn_in_traces_dict["mu_trace"].append(full_mu_trace[:10000])
+        middle_traces_dict["mu_trace"].append(full_mu_trace[10000:50000])
+        converged_traces_dict["mu_trace"].append(full_mu_trace[50000:])
 
 
-y_major_steps = array([0.02, 0.03, 0.4, 0.02])
-x_major_steps = array([20, 10, 1, 20])
 
+
+
+
+
+
+
+
+def compute_gelman_rubin_diagnostic(all_traces_array):
+    variance_by_chain = empty((all_traces_array.shape[0], ))
+    for j in range(len(variance_by_chain)):
+        var_j = (1.0/(all_traces_array[j].shape[0]-1)) * ((all_traces_array[j]-all_traces_array[j].mean())**2).sum()
+        variance_by_chain[j] = var_j
+    w = (1.0/len(variance_by_chain)) * variance_by_chain.sum()
+    theta_double_bar = all_traces_array.mean(axis=1).sum() / float(len(variance_by_chain))
+    b = (float(all_traces_array[0].shape[0]) / (len(variance_by_chain)-1)) * ((all_traces_array.mean(axis=1) - theta_double_bar)**2).sum()
+    var_hat_theta = (1 - (1.0/all_traces_array[0].shape[0]))*w + (1.0/all_traces_array[0].shape[0])*b
+    r_hat = sqrt(var_hat_theta/w)
+    return r_hat
+
+def compute_gr_diagnostic_plot(all_traces_array, window_size=10000):
+    single_trace_length = all_traces_array.shape[1]
+    current_index = 0
+    index_list = []
+    gr_diagnostic = []
+    while current_index <= single_trace_length-window_size:
+        gr_diagnostic.append(compute_gelman_rubin_diagnostic(all_traces_array[:,0:current_index+window_size]))
+        index_list.append(current_index+window_size)
+        current_index += window_size
+    return index_list, gr_diagnostic
 
 for n in range(len(plot_names)):
 
@@ -186,10 +219,13 @@ for n in range(len(plot_names)):
     
     a = ax1BurnHist.hist(flattened_burn_in_traces, bins=100, range=hist_range, normed=True, histtype="stepfilled", orientation="horizontal", color="red", alpha=1.0)
     
+    seven_colors = ["b", "g", "r", "c", "m", "y", "b"]
+    
     for m in range(len(burn_in_traces)):
-        ax1Trace.scatter(arange(10000), burn_in_traces[m], color="red", alpha=0.03, lw=0, s=1)
-        ax1Trace.scatter(arange(10000, 50000), middle_traces[m], color="green", alpha=0.03, lw=0, s=1)
-        ax1Trace.scatter(arange(50000, 100000), converged_traces[m], color="blue", alpha=0.03, lw=0, s=1)
+        ax1Trace.scatter(arange(10000), burn_in_traces[m], color=seven_colors[m], alpha=0.03, lw=0, s=1)
+        ax1Trace.scatter(arange(10000, 50000), middle_traces[m], color=seven_colors[m], alpha=0.03, lw=0, s=1)
+        ax1Trace.scatter(arange(50000, 100000), converged_traces[m], color=seven_colors[m], alpha=0.03, lw=0, s=1)
+        ax1Trace.vlines([10000, 50000], hist_range[0], hist_range[1], lw=0.5)
 
     b = ax1ConvHist.hist(flattened_converged_traces, bins=100, range=hist_range, normed=True, histtype="stepfilled", orientation="horizontal", color="blue", alpha=1.0)
 
@@ -242,7 +278,24 @@ for n in range(len(plot_names)):
     ax1Trace.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 
     ax1Trace.xaxis.set_major_locator(MaxNLocator(prune='both'))
+    
+    
+    all_traces_array = empty((7, 100000))
 
+    for m in range(len(burn_in_traces)):
+        full_trace = hstack((burn_in_traces[m].transpose(), middle_traces[m].transpose(), converged_traces[m].transpose()))
+        all_traces_array[m] = full_trace
+    
+    burn_in_gr_val = compute_gelman_rubin_diagnostic(all_traces_array[:,0:10000])
+    middle_gr_val = compute_gelman_rubin_diagnostic(all_traces_array[:,10000:50000])
+    converged_gr_val = compute_gelman_rubin_diagnostic(all_traces_array[:,50000:100000])
+    
+    ax1BurnHist.text(0.8, 0.80, r"$\hat{R}=%.3f$" % burn_in_gr_val, horizontalalignment='right', verticalalignment='bottom', transform=ax1BurnHist.transAxes, fontsize=10)
+    
+    # ax1Trace.text(0.3, 0.80, r"$\hat{R}=%.3f$" % middle_gr_val, horizontalalignment='center', verticalalignment='bottom', transform=ax1Trace.transAxes, fontsize=10)
+    
+    ax1ConvHist.text(0.8, 0.80, r"$\hat{R}=%.3f$" % converged_gr_val, horizontalalignment='right', verticalalignment='bottom', transform=ax1ConvHist.transAxes, fontsize=10)
+    
 
     # pos =         [left, bottom, width, height]
     ax1BurnHist.set_position([  0.095,                      0.25,   0.145,   0.735])
@@ -256,7 +309,11 @@ for n in range(len(plot_names)):
 
 
 
-import cPickle as pickle
+
+sys.exit()
+
+
+
 pickle.dump( burn_in_traces_dict, open( "burn_in_traces.p", "wb" ) )
 pickle.dump( middle_traces_dict, open( "middle_traces.p", "wb" ) )
 pickle.dump( converged_traces_dict, open( "converged_traces.p", "wb" ) )
