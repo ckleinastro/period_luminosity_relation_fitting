@@ -11,7 +11,7 @@ import cPickle as pickle
 import sys
 
 
-reload_pickles = False
+reload_pickles = True
 
 plot_dir = "plots/"
 
@@ -174,7 +174,8 @@ if not reload_pickles:
 
 
 
-
+y_major_steps = array([0.02, 0.03, 0.4, 0.02, 0.05])
+x_major_steps = array([20, 10, 1, 20, 15])
 
 
 
