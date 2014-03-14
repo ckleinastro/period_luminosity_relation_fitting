@@ -5,6 +5,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib
 from numpy import array, log10, loadtxt
 from scipy import interpolate
+import pyfits
 
 import sys
 
@@ -246,6 +247,30 @@ for band in band_list:
 
 
 
+def load_kurucz_models(temp='7000', r=5, gravity="g25"):
+    filename="kurucz_model_data/ckm25_" + temp + ".fits"
+    hdulist = pyfits.open(filename)
+    hdulist[0].header
+    scidata = hdulist[1].data
+    
+    angstromg_grid = scidata['WAVELENGTH']
+    wavelength_grid = log10(scidata['WAVELENGTH'] / 10000.0)     # converted to microns
+    flam = scidata[gravity]      # flux units erg/s/cm^2/A, also called FLAM
+    hdulist.close()
+
+    fnu = (3.34e4)*(angstromg_grid**2)*flam
+
+    # To convert to observed flux at Earth, multiply by a factor of 
+    # (R/D)^2 where R is the stellar radius, and D is the distance to Earth.
+
+    d = 10 * 3.08568025e18 # 10 pc in cm
+    radius = r * 69599000000 # 5 R_sol in cm
+
+    fnu_abs = fnu * (radius/d)**2
+
+    ab_mag = -2.5*log10(fnu_abs/3631.)
+
+    return wavelength_grid, ab_mag
 
 
 
@@ -255,8 +280,18 @@ spline_smoothness = 0.05
 
 fig = plt.figure(figsize=(3.3, 4.5))
 ax1 = subplot(111)
+
+wavelength_grid, model_mag = load_kurucz_models(temp="6250", r=7.0)
+ax1.plot(wavelength_grid, model_mag, color="gray", lw=0.5, alpha=1)
+# ax1.plot(wavelength_grid, model_mag, color="yellow", label="Model T=6250, R=7.0", alpha=0.2)
+
+wavelength_grid, model_mag = load_kurucz_models(temp="7000", r=4.0)
+ax1.plot(wavelength_grid, model_mag, color="gray", lw=0.5, alpha=1)
+# ax1.plot(wavelength_grid, model_mag, color="orange", label="Model T=7000, R=4.0", alpha=0.2)
+
 # sed_period_list = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3]
 sed_period_list = [0.9, 0.75, 0.6, 0.45, 0.3]
+# sed_period_list = [0.53]
 for sed_period in sed_period_list:
     sed_mags = []
     sed_mag_errs = []
@@ -330,6 +365,12 @@ for sed_period in sed_period_list:
     
     # points = ax1.errorbar(log10(array(sed_wavelengths)), sed_mags, sed_mag_errs, marker="o", linestyle="none", markersize=3, color=getp(midline[0], "color"))
 
+
+
+
+
+
+
 ax1.legend(loc="lower left", numpoints=1, fontsize=10, handlelength=0.7, labelspacing=0.5, handletextpad=0.4)
 ax1.set_xlim(log10(array(sed_wavelengths)).min()-0.1, log10(array(sed_wavelengths)).max()+0.1)
 ax1.set_ylim(5.5, 0)
@@ -359,3 +400,9 @@ ax1.set_position([0.13, 0.11, 0.85, 0.87])
 canvas = FigureCanvas(fig)
 canvas.print_figure(plot_dir + "seds.pdf", dpi=300)
 close("all")
+
+
+
+
+
+
