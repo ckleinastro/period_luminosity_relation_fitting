@@ -85,6 +85,25 @@ ebv_color_excess = array(ebv_color_excess, dtype=extinction_dtype)
 
 
 
+sfd_ebv_color_excess = []
+# name, ra, dec, E(B-V), err_E(B-V)
+sfd_extinction_file = file("extinction.tbl.txt")
+for line in sfd_extinction_file:
+    if line[0] not in ("|", "\\"):
+        if line.split()[0] in all_names:
+            sfd_ebv_color_excess.append((line.split()[0], 
+                                 float(line.split()[1]), float(line.split()[2]), 
+                                 float(line.split()[11]), float(line.split()[12])))
+sfd_extinction_file.close()
+extinction_dtype = dtype([('name', str, 7),
+                          ('ra', 'float'),
+                          ('dec', 'float'),
+                          ('ebv', 'float'),
+                          ('ebv_err', 'float')])
+sfd_ebv_color_excess = array(sfd_ebv_color_excess, dtype=extinction_dtype)
+
+
+
 """
 0   name
 1   type
@@ -232,3 +251,53 @@ canvas.print_figure(plot_dir + "EBV_residual.pdf" , dpi=300)
 close("all")
 
 print "At b>30 deg, the fitted E(B-V) is %.4f (+/-%.4f) larger than the prior SF value." % (mean(ebv_residual[abs(galactic_latitudes)>30]), std(ebv_residual[abs(galactic_latitudes)>30]))
+
+
+
+def ccm_extinction_law(wavelength):
+    # Extinction law (A_lambda/A_V) from Cardelli, Clayton, and Mathis 1989
+    x = 1.0/wavelength
+    if x <= 1.1:    # If infrared or longer wavelength
+        a = 0.574*x**1.61
+        b = -0.527*x**1.61
+    if x > 1.1:     # If optical wavelength 
+        y = x-1.82
+        a = 1.0 + 0.17699*y - 0.50447*y**2 - 0.02427*y**3 + 0.72085*y**4 + 0.01979*y**5 - 0.77530*y**6 + 0.32999*y**7
+        b = 1.41338*y + 2.28305*y**2 + 1.07233*y**3 - 5.38434*y**4 - 0.62251*y**5 + 5.30260*y**6 - 2.09002*y**7
+    return a, b
+
+band_wavelengths = {    "U":0.3663,
+                        "B":0.4361,
+                        "hipp":0.5170,
+                        "V":0.5448,
+                        "R":0.6407,
+                        "I":0.7980,
+                        "z":0.8896,
+                        "J":1.22,
+                        "H":1.63,
+                        "K":2.19,
+                        "W1":3.4,
+                        "W2":4.6,
+                        "W3":12.0
+                    }
+
+extinction_ccm_a = []
+extinction_ccm_b = []
+for band in band_list:
+    extinction_coefficients = ccm_extinction_law(band_wavelengths[band])
+    extinction_ccm_a.append(extinction_coefficients[0])
+    extinction_ccm_b.append(extinction_coefficients[1])
+extinction_ccm_a = array(extinction_ccm_a)
+extinction_ccm_b = array(extinction_ccm_b)
+
+median_prior_A_lambdas = []
+median_fitted_A_lambdas = []
+extinction_residuals = []
+median_extinction_residuals = []
+for m in range(len(band_list)):
+    prior_A_lambdas = ebv_color_excess["ebv"][abs(galactic_latitudes)>30] * (3.1*extinction_ccm_a[m] + extinction_ccm_b[m])
+    fitted_A_lambdas = fitted_ebv_values[abs(galactic_latitudes)>30] * (3.1*extinction_ccm_a[m] + extinction_ccm_b[m])
+    extinction_residuals.append(fitted_A_lambdas-prior_A_lambdas)
+    median_prior_A_lambdas.append(median(prior_A_lambdas))
+    median_fitted_A_lambdas.append(median(fitted_A_lambdas))
+    median_extinction_residuals.append(median(fitted_A_lambdas-prior_A_lambdas))
