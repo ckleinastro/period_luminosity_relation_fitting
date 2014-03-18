@@ -235,7 +235,7 @@ ax1.yaxis.set_major_locator(majorLocator_y1)
 ax1.yaxis.set_minor_locator(minorLocator_y1)
 
 ax1.set_xlabel(r"$|b|$ [deg]")
-ax1.set_ylabel(r"$E(B-V)_{\rm post} - E(B-V)_{\rm SF}$") 
+ax1.set_ylabel(r"$E(B-V)_{\rm Post} - E(B-V)_{\rm SF}$") 
 
 text_string = r"At $b>30$ deg, the posterior"
 text_string_2 = r"$E(B-V)$ is $%.3f$ ($\pm %.3f$)" % (mean(ebv_residual[abs(galactic_latitudes)>30]), std(ebv_residual[abs(galactic_latitudes)>30]))
@@ -368,7 +368,7 @@ ax1.yaxis.set_major_locator(majorLocator_y1)
 ax1.yaxis.set_minor_locator(minorLocator_y1)
 
 ax1.set_xlabel(r"$|b|$ [deg]")
-ax1.set_ylabel(r"$E(B-V)_{\rm post} - E(B-V)_{\rm SF}$") 
+ax1.set_ylabel(r"$E(B-V)_{\rm Post} - E(B-V)_{\rm SF}$") 
 
 ax2.set_ylabel(r"Distance Modulus ($\mu_{\rm Post}$)", labelpad=5) 
 ax2.yaxis.tick_right()
