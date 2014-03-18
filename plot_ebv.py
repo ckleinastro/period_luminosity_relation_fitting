@@ -3,7 +3,9 @@ from matplotlib.pylab import *
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib
+from matplotlib import cm
 from numpy import array, log10, loadtxt
+from scipy import interpolate
 
 import sys
 
@@ -177,6 +179,7 @@ sfd_ebv_color_excess = array(sfd_ebv_color_excess, dtype=extinction_dtype)
 post_names = []
 fitted_ebv_values = []
 fitted_ebv_errs = []
+post_mus = []
 
 star_fit_data_file = file("full_rrl_fit_table.txt", "r")
 first_line = star_fit_data_file.readline()
@@ -184,10 +187,11 @@ for line in star_fit_data_file:
     post_names.append(line.split()[0])
     fitted_ebv_values.append(float(line.split()[38]))
     fitted_ebv_errs.append(float(line.split()[39]))
+    post_mus.append(float(line.split()[36]))
 star_fit_data_file.close()      
 fitted_ebv_values = array(fitted_ebv_values)
 fitted_ebv_errs = array(fitted_ebv_errs)
-    
+post_mus = array(post_mus)
 
 
 from astropy.coordinates import ICRSCoordinates, GalacticCoordinates
@@ -247,7 +251,7 @@ ax1.text(25, -0.14-2*vspacing, text_string_3, fontsize=10, ha='left', va='top')
 ax1.set_position([0.19, 0.195, 0.77, 0.79])
 
 canvas = FigureCanvas(fig)
-canvas.print_figure(plot_dir + "EBV_residual.pdf" , dpi=300)
+canvas.print_figure(plot_dir + "EBV_residual_black.pdf" , dpi=300)
 close("all")
 
 print "At b>30 deg, the fitted E(B-V) is %.4f (+/-%.4f) larger than the prior SF value." % (mean(ebv_residual[abs(galactic_latitudes)>30]), std(ebv_residual[abs(galactic_latitudes)>30]))
@@ -301,3 +305,97 @@ for m in range(len(band_list)):
     median_prior_A_lambdas.append(median(prior_A_lambdas))
     median_fitted_A_lambdas.append(median(fitted_A_lambdas))
     median_extinction_residuals.append(median(fitted_A_lambdas-prior_A_lambdas))
+
+
+
+
+
+
+
+
+
+raw_red_color = loadtxt("red_mapping.txt")
+raw_green_color = loadtxt("green_mapping.txt")
+raw_blue_color = loadtxt("blue_mapping.txt")
+
+red_function = interpolate.interp1d(raw_red_color[:,0], raw_red_color[:,1], kind="linear")
+green_function = interpolate.interp1d(raw_green_color[:,0], raw_green_color[:,1], kind="linear")
+blue_function = interpolate.interp1d(raw_blue_color[:,0], raw_blue_color[:,1], kind="linear")
+
+def make_color(val):
+    val *= 255
+    color = [red_function(val)/255., green_function(val)/255., blue_function(val)/255., 1.0]
+    return color
+
+# now create the 2D colormap, multiplying by blackness to dimm vertically
+color_display = zeros((256, 256, 3))
+color_display[:,:,0] = (red_function(arange(256*256).reshape(256,256)/256).transpose()  / 255.)
+color_display[:,:,1] = (green_function(arange(256*256).reshape(256,256)/256).transpose()  / 255.)
+color_display[:,:,2] = (blue_function(arange(256*256).reshape(256,256)/256).transpose()  / 255.)
+
+
+
+
+fig = plt.figure(figsize = (3.3, 2.5))
+ax1 = subplot(121)
+ax2 = subplot(122)
+
+for idx in range(len(post_mus)):
+    # ax1.errorbar(abs(galactic_latitudes)[idx], ebv_residual[idx], ebv_residual_error[idx], linestyle="none", marker="o", ms=3, color=make_color((post_mus[idx]-post_mus.min())/(post_mus.max()-post_mus.min())) )
+    ax1.errorbar(abs(galactic_latitudes)[idx], ebv_residual[idx], ebv_residual_error[idx], linestyle="none", marker="o", ms=3, color=make_color((post_mus.max() - post_mus[idx])/(post_mus.max()-post_mus.min())) )
+
+# (left, right, bottom, top)
+# extent=[post_mus.min(), 0.1*(post_mus.max()-post_mus.min()), 0, 0.2]
+# extent=[0, 0.2, post_mus.min(), 0.1*(post_mus.max()-post_mus.min())]
+ax2.imshow(color_display.transpose((1,0,2)), origin="upper", interpolation="lanczos", extent=[0, 0.3, post_mus.min(), post_mus.max()], alpha=1)
+
+ax2.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom='off',      # ticks along the bottom edge are off
+    top='off',         # ticks along the top edge are off
+    labelbottom='off')
+
+# This code draws major and minor tick lines. Major ticks get number labels.
+majorLocator_x = MultipleLocator(10)
+minorLocator_x = MultipleLocator(5)
+ax1.xaxis.set_major_locator(majorLocator_x)
+ax1.xaxis.set_minor_locator(minorLocator_x)
+
+majorLocator_y1 = MultipleLocator(0.1)
+minorLocator_y1 = MultipleLocator(0.05)
+ax1.yaxis.set_major_locator(majorLocator_y1)
+ax1.yaxis.set_minor_locator(minorLocator_y1)
+
+ax1.set_xlabel(r"$|b|$ [deg]")
+ax1.set_ylabel(r"$E(B-V)_{\rm post} - E(B-V)_{\rm SF}$") 
+
+ax2.set_ylabel(r"Distance Modulus ($\mu_{\rm Post}$)", labelpad=5) 
+ax2.yaxis.tick_right()
+ax2.yaxis.set_label_position("right")
+
+majorLocator_y2 = MultipleLocator(1)
+minorLocator_y2 = MultipleLocator(0.5)
+ax2.yaxis.set_major_locator(majorLocator_y2)
+ax2.yaxis.set_minor_locator(minorLocator_y2)
+
+
+
+text_string = r"At $b>30$ deg, the posterior"
+text_string_2 = r"$E(B-V)$ is $%.3f$ ($\pm %.3f$)" % (mean(ebv_residual[abs(galactic_latitudes)>30]), std(ebv_residual[abs(galactic_latitudes)>30]))
+text_string_3 = r"larger than the prior SF value." 
+vspacing = 0.03
+ax1.text(10, -0.14, text_string, fontsize=10, ha='left', va='top')
+ax1.text(10, -0.14-vspacing, text_string_2, fontsize=10, ha='left', va='top')
+ax1.text(10, -0.14-2*vspacing, text_string_3, fontsize=10, ha='left', va='top')
+
+
+
+# pos =         [left, bottom, width, height]
+ax1.set_position([0.19, 0.195, 0.57, 0.79])
+ax2.set_position([0.77, 0.05, 0.13, 0.9353])
+
+canvas = FigureCanvas(fig)
+canvas.print_figure(plot_dir + "EBV_residual.pdf" , dpi=300)
+close("all")
+
