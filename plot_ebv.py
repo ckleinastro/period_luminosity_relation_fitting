@@ -3,7 +3,6 @@ from matplotlib.pylab import *
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib
-from matplotlib import cm
 from matplotlib.ticker import MaxNLocator
 from numpy import array, log10, loadtxt
 from scipy import interpolate
@@ -483,10 +482,28 @@ close("all")
 
 
 
+
+
+
+
+def make_color_rb(val):
+    val *= 255
+    color = [val/255., 0.0, (255.0-val)/255., 1.0]
+    return color
+
+# now create the 2D colormap, multiplying by blackness to dimm vertically
+color_display_rb = zeros((256, 256, 3))
+color_display_rb[:,:,0] = ((arange(256*256).reshape(256,256)/256).transpose()  / 255.)
+color_display_rb[:,:,1] = ((zeros(256*256).reshape(256,256)/256).transpose()  / 255.)
+color_display_rb[:,:,2] = ((256-arange(256*256).reshape(256,256)/256).transpose()  / 255.)
+
+
+
+
 color_list = []
 
 for idx in range(len(fitted_ebv_values)):
-    color_list.append(make_color( (fitted_ebv_values[idx]-fitted_ebv_values.min())/(fitted_ebv_values.max()-fitted_ebv_values.min())    ) )
+    color_list.append(make_color_rb( (fitted_ebv_values[idx]-fitted_ebv_values.min())/(fitted_ebv_values.max()-fitted_ebv_values.min())    ) )
 color_array = array(color_list)
 
 
@@ -548,7 +565,7 @@ axsizes.set_ylabel(r"$\mu$", labelpad=-6)
 
 
 ax2 = fig.add_subplot(3,1,3)
-ax2.imshow(color_display, origin="lower", interpolation="lanczos", 
+ax2.imshow(color_display_rb, origin="lower", interpolation="lanczos", 
     extent=[fitted_ebv_values.min(), fitted_ebv_values.max(), 0, 0.02], alpha=1)
     
 ax2.set_xlabel(r"$E(B-V)_{\rm Post}$", labelpad=3)
