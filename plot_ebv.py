@@ -4,6 +4,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib
 from matplotlib import cm
+from matplotlib.ticker import MaxNLocator
 from numpy import array, log10, loadtxt
 from scipy import interpolate
 
@@ -198,15 +199,17 @@ from astropy.coordinates import ICRSCoordinates, GalacticCoordinates
 from astropy import units as u
 
 galactic_latitudes = []
+galactic_longitudes = []
 
 for n in range(len(all_names)):
     star_ra = ebv_color_excess[n][1]
     star_dec = ebv_color_excess[n][2]
     star_coords = ICRSCoordinates(ra=star_ra, dec=star_dec, unit=(u.degree, u.degree))
     galactic_latitudes.append(star_coords.galactic.b.degrees)
+    galactic_longitudes.append(star_coords.galactic.l.degrees)
 
 galactic_latitudes = array(galactic_latitudes)
-
+galactic_longitudes = array(galactic_longitudes)
 
 
 
@@ -251,7 +254,7 @@ ax1.text(25, -0.14-2*vspacing, text_string_3, fontsize=10, ha='left', va='top')
 ax1.set_position([0.19, 0.195, 0.77, 0.79])
 
 canvas = FigureCanvas(fig)
-canvas.print_figure(plot_dir + "EBV_residual_black.pdf" , dpi=300)
+canvas.print_figure(plot_dir + "EBV_residual.pdf" , dpi=300)
 close("all")
 
 print "At b>30 deg, the fitted E(B-V) is %.4f (+/-%.4f) larger than the prior SF value." % (mean(ebv_residual[abs(galactic_latitudes)>30]), std(ebv_residual[abs(galactic_latitudes)>30]))
@@ -396,6 +399,190 @@ ax1.set_position([0.19, 0.195, 0.57, 0.79])
 ax2.set_position([0.77, 0.05, 0.13, 0.9353])
 
 canvas = FigureCanvas(fig)
-canvas.print_figure(plot_dir + "EBV_residual.pdf" , dpi=300)
+canvas.print_figure(plot_dir + "EBV_residual_distance_colored.pdf" , dpi=300)
 close("all")
+
+
+
+
+
+
+
+
+abs_galactic_longitudes = abs(galactic_longitudes)
+
+
+
+
+fig = plt.figure(figsize = (3.3, 2.5))
+ax1 = subplot(121)
+ax2 = subplot(122)
+
+for idx in range(len(abs_galactic_longitudes)):
+    # ax1.errorbar(abs(galactic_latitudes)[idx], ebv_residual[idx], ebv_residual_error[idx], linestyle="none", marker="o", ms=3, color=make_color((post_mus[idx]-post_mus.min())/(post_mus.max()-post_mus.min())) )
+    ax1.errorbar(abs(galactic_latitudes)[idx], ebv_residual[idx], ebv_residual_error[idx], linestyle="none", marker="o", ms=3, color=make_color((abs_galactic_longitudes.max() - abs_galactic_longitudes[idx])/(abs_galactic_longitudes.max()-abs_galactic_longitudes.min())) )
+
+# (left, right, bottom, top)
+# extent=[post_mus.min(), 0.1*(post_mus.max()-post_mus.min()), 0, 0.2]
+# extent=[0, 0.2, post_mus.min(), 0.1*(post_mus.max()-post_mus.min())]
+ax2.imshow(color_display.transpose((1,0,2)), origin="upper", interpolation="lanczos", extent=[0, 10, abs_galactic_longitudes.min(), abs_galactic_longitudes.max()], alpha=1)
+
+ax2.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom='off',      # ticks along the bottom edge are off
+    top='off',         # ticks along the top edge are off
+    labelbottom='off')
+
+# This code draws major and minor tick lines. Major ticks get number labels.
+majorLocator_x = MultipleLocator(10)
+minorLocator_x = MultipleLocator(5)
+ax1.xaxis.set_major_locator(majorLocator_x)
+ax1.xaxis.set_minor_locator(minorLocator_x)
+
+majorLocator_y1 = MultipleLocator(0.1)
+minorLocator_y1 = MultipleLocator(0.05)
+ax1.yaxis.set_major_locator(majorLocator_y1)
+ax1.yaxis.set_minor_locator(minorLocator_y1)
+
+ax1.set_xlabel(r"$|b|$ [deg]")
+ax1.set_ylabel(r"$E(B-V)_{\rm Post} - E(B-V)_{\rm SF}$") 
+
+ax2.set_ylabel(r"$|l|$ [deg]", labelpad=0) 
+ax2.yaxis.tick_right()
+ax2.yaxis.set_label_position("right")
+
+majorLocator_y2 = MultipleLocator(30)
+minorLocator_y2 = MultipleLocator(15)
+ax2.yaxis.set_major_locator(majorLocator_y2)
+ax2.yaxis.set_minor_locator(minorLocator_y2)
+
+
+
+text_string = r"At $b>30$ deg, the posterior"
+text_string_2 = r"$E(B-V)$ is $%.3f$ ($\pm %.3f$)" % (mean(ebv_residual[abs(galactic_latitudes)>30]), std(ebv_residual[abs(galactic_latitudes)>30]))
+text_string_3 = r"larger than the prior SF value." 
+vspacing = 0.03
+ax1.text(10, -0.14, text_string, fontsize=10, ha='left', va='top')
+ax1.text(10, -0.14-vspacing, text_string_2, fontsize=10, ha='left', va='top')
+ax1.text(10, -0.14-2*vspacing, text_string_3, fontsize=10, ha='left', va='top')
+
+
+
+# pos =         [left, bottom, width, height]
+ax1.set_position([0.19, 0.195, 0.57, 0.79])
+ax2.set_position([0.77, 0.05, 0.13, 0.9353])
+
+canvas = FigureCanvas(fig)
+canvas.print_figure(plot_dir + "EBV_residual_gallong_colored.pdf" , dpi=300)
+close("all")
+
+
+
+
+
+
+
+color_list = []
+
+for idx in range(len(fitted_ebv_values)):
+    color_list.append(make_color( (fitted_ebv_values[idx]-fitted_ebv_values.min())/(fitted_ebv_values.max()-fitted_ebv_values.min())    ) )
+color_array = array(color_list)
+
+
+
+sizes_array = ((1.0/post_mus) - (1.0/post_mus).min()) * (100/max((1.0/post_mus) - (1.0/post_mus).min())) + 5
+
+axsizes_mus = array([7, 8, 9, 10, 11, 12])
+
+axsizes_array = ((1.0/axsizes_mus) - (1.0/post_mus).min()) * (100/max((1.0/post_mus) - (1.0/post_mus).min())) + 5
+
+
+
+
+
+
+
+fig = plt.figure(figsize = (3.3, 2.7))
+ax1 = subplot(311, projection = "aitoff")
+ax1.scatter(radians(galactic_longitudes), radians(galactic_latitudes), marker="o", color=color_array, alpha=1.0, s=sizes_array, linewidth=0.5, edgecolor='black')
+
+ax1.grid(True)
+
+yticks = ax1.yaxis.get_major_ticks()
+for y_tick_label in yticks:
+    y_tick_label.label1.set_visible(False)
+
+xticks = ax1.xaxis.get_major_ticks()
+for x_tick_label in xticks:
+    x_tick_label.label1.set_visible(False)
+
+axsizes = fig.add_subplot(2,1,2)
+
+axsizes.scatter(axsizes_mus, ones(len(axsizes_mus)), marker="o", color="k", alpha=1.0, s=axsizes_array, linewidth=0.5, edgecolor='black')
+
+axsizes.set_xlim(6.5, 12.5)
+
+axsizes_yticks = axsizes.yaxis.get_major_ticks()
+for y_tick_label in axsizes_yticks:
+    y_tick_label.label1.set_visible(False)
+
+
+axsizes.yaxis.set_ticks([])
+
+axsizes.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom='off',      # ticks along the bottom edge are on
+    top='off',         # ticks along the top edge are off
+    labelbottom='on')
+
+axsizes.set_frame_on(False)
+
+for tick in axsizes.get_xaxis().get_major_ticks():
+    tick.set_pad(-3.)
+    tick.label1 = tick._get_text1()
+
+axsizes.set_ylabel(r"$\mu$", labelpad=-6)
+
+
+
+ax2 = fig.add_subplot(3,1,3)
+ax2.imshow(color_display, origin="lower", interpolation="lanczos", 
+    extent=[fitted_ebv_values.min(), fitted_ebv_values.max(), 0, 0.02], alpha=1)
+    
+ax2.set_xlabel(r"$E(B-V)_{\rm Post}$", labelpad=3)
+ax2.xaxis.set_label_position("bottom")
+ax2.yaxis.set_ticks([])
+
+ax2.tick_params(
+    axis='x',          # changes apply to the x-axis
+    which='both',      # both major and minor ticks are affected
+    bottom='on',      # ticks along the bottom edge are on
+    top='off',         # ticks along the top edge are off
+    labelbottom='on')
+majorLocator_y2 = MultipleLocator(0.05)
+minorLocator_y2 = MultipleLocator(0.025)
+ax2.yaxis.set_major_locator(majorLocator_y2)
+ax2.yaxis.set_minor_locator(minorLocator_y2)
+
+ytickscolorbar = ax2.yaxis.get_major_ticks()
+for y_tick_label in ytickscolorbar:
+    y_tick_label.label1.set_visible(False)
+
+# pos =         [left, bottom, width, height]
+ax1.set_position([0.025, 0.225, 0.95, 0.95])
+axsizes.set_position([0.1, 0.29, 0.80, 0.10])
+ax2.set_position([0.025, 0.125, 0.95, 0.15])
+canvas = FigureCanvas(fig)
+canvas.print_figure(plot_dir + "EBV_residual_aitoff.pdf" , dpi=300)
+close("all")
+
+
+
+
+
+
+
+
 
