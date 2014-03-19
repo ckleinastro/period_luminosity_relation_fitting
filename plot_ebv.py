@@ -448,7 +448,7 @@ ax1.yaxis.set_minor_locator(minorLocator_y1)
 ax1.set_xlabel(r"$|b|$ [deg]")
 ax1.set_ylabel(r"$E(B-V)_{\rm Post} - E(B-V)_{\rm SF}$") 
 
-ax2.set_ylabel(r"$|l|$ [deg]", labelpad=0) 
+ax2.set_ylabel(r"$|l|$ [deg]", labelpad=-.5) 
 ax2.yaxis.tick_right()
 ax2.yaxis.set_label_position("right")
 
