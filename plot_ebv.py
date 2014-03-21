@@ -4,7 +4,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib
 from matplotlib.ticker import MaxNLocator
-from numpy import array, log10, loadtxt
+from numpy import array, log10, loadtxt, exp
 from scipy import interpolate
 
 import sys
@@ -482,21 +482,60 @@ close("all")
 
 
 
+# functions take input from 0-255 and return output from 0-255
+red_function_rb = lambda x: 255*(1-160**(-x/255.)) * (1.0-(1.0/160.0))**-1.0
+green_function_rb = lambda x: array(x*0.0)
+blue_function_rb = lambda x: 255.0-red_function_rb(x)
 
+
+fig = plt.figure(figsize = (3.3, 2.5))
+ax1 = subplot(111)
+
+
+ax1.plot(xgrid, red_function_rb(xgrid), color="red")
+ax1.plot(xgrid, green_function_rb(xgrid), color="green")
+ax1.plot(xgrid, blue_function_rb(xgrid), color="blue")
+
+
+ax1.set_ylim(0, 255)
+ax1.set_xlim(0, 255)
+ax1.set_ylabel("Color Mapped Value")
+ax1.set_xlabel("Data Value")
+# pos =         [left, bottom, width, height]
+ax1.set_position([0.19, 0.195, 0.77, 0.78])
+canvas = FigureCanvas(fig)
+canvas.print_figure(plot_dir + "colromap.pdf" , dpi=300)
+close("all")
 
 
 
 def make_color_rb(val):
     val *= 255
-    color = [val/255., 0.0, (255.0-val)/255., 1.0]
+    color = [red_function_rb(val)/255., green_function_rb(val)/255., blue_function_rb(val)/255., 1.0]
     return color
 
 # now create the 2D colormap, multiplying by blackness to dimm vertically
 color_display_rb = zeros((256, 256, 3))
-color_display_rb[:,:,0] = ((arange(256*256).reshape(256,256)/256).transpose()  / 255.)
-color_display_rb[:,:,1] = ((zeros(256*256).reshape(256,256)/256).transpose()  / 255.)
-color_display_rb[:,:,2] = ((256-arange(256*256).reshape(256,256)/256).transpose()  / 255.)
+color_display_rb[:,:,0] = (red_function_rb(arange(256*256).reshape(256,256)/256).transpose()  / 255.)
+color_display_rb[:,:,1] = (green_function_rb(arange(256*256).reshape(256,256)/256).transpose()  / 255.)
+color_display_rb[:,:,2] = (blue_function_rb(arange(256*256).reshape(256,256)/256).transpose()  / 255.)
 
+
+
+
+
+
+
+# def make_color_rb(val):
+#     val *= 255
+#     color = [val/255., 0.0, (255.0-val)/255., 1.0]
+#     return color
+# 
+# # now create the 2D colormap, multiplying by blackness to dimm vertically
+# color_display_rb = zeros((256, 256, 3))
+# color_display_rb[:,:,0] = ((arange(256*256).reshape(256,256)/256).transpose()  / 255.)
+# color_display_rb[:,:,1] = ((zeros(256*256).reshape(256,256)/256).transpose()  / 255.)
+# color_display_rb[:,:,2] = ((256-arange(256*256).reshape(256,256)/256).transpose()  / 255.)
 
 
 
