@@ -110,6 +110,14 @@ mu_post_err = array(mu_post_err)
 type = array(type)
 blazhko = array(blazhko)
 
+distances = 10**(1+mu_post/5)
+
+upper = ((10**((mu_post_err+5)/5))/10)-1
+lower = 1-((10**((-mu_post_err+5)/5))/10)
+
+fractional_distance_errs = (upper + lower)/2
+
+print "Average fractional distance error is %.2f%% (+/- %.3f%%)" % (100*fractional_distance_errs.mean(), 100*fractional_distance_errs.std())
 
 
 fig = plt.figure(figsize=(3.3, 4.5))
