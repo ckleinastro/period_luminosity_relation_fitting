@@ -4,7 +4,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib
 from matplotlib.ticker import MaxNLocator
-from numpy import array, log10, loadtxt, exp
+from numpy import array, log10, loadtxt, exp, arange
 from scipy import interpolate
 
 import sys
@@ -491,6 +491,7 @@ blue_function_rb = lambda x: 255.0-red_function_rb(x)
 fig = plt.figure(figsize = (3.3, 2.5))
 ax1 = subplot(111)
 
+xgrid = arange(255)
 
 ax1.plot(xgrid, red_function_rb(xgrid), color="red")
 ax1.plot(xgrid, green_function_rb(xgrid), color="green")
@@ -637,8 +638,162 @@ close("all")
 
 
 
+import pickle
+
+mags = pickle.load( open( "mean_flux_mags_dict.p", "rb" ) )
+
+ebv_values_with_color = []
+ebv_errs_with_color = []
+w1_minus_w2_color = []
+w1_minus_w2_err = []
+
+for m in range(len(all_names)):
+    current_name = all_names[m]
+    if ("W1" in mags[current_name].keys()) and ("W2" in mags[current_name].keys()):
+        ebv_values_with_color.append(fitted_ebv_values[m])
+        ebv_errs_with_color.append(fitted_ebv_errs[m])
+        w1_minus_w2_color.append(mags[current_name]["W1"][0] - mags[current_name]["W2"][0])
+        w1_minus_w2_err.append((mags[current_name]["W1"][1]**2 + mags[current_name]["W2"][1]**2)**0.5)
+ebv_values_with_color = array(ebv_values_with_color)
+ebv_errs_with_color = array(ebv_errs_with_color)
+w1_minus_w2_color = array(w1_minus_w2_color)
+w1_minus_w2_err = array(w1_minus_w2_err)
+
+
+
+
+fig = plt.figure(figsize = (3.3, 2.5))
+ax1 = subplot(111)
+
+ax1.errorbar(w1_minus_w2_color, ebv_values_with_color, ebv_errs_with_color, w1_minus_w2_err, linestyle="none", marker="o", ms=3, color="k", alpha=0.5)
+
+# ax1.scatter(w1_minus_w2_color, ebv_values_with_color, marker="o", s=3, alpha=0.5)
+
+
+# This code draws major and minor tick lines. Major ticks get number labels.
+majorLocator_x = MultipleLocator(0.04)
+minorLocator_x = MultipleLocator(0.02)
+ax1.xaxis.set_major_locator(majorLocator_x)
+ax1.xaxis.set_minor_locator(minorLocator_x)
+
+majorLocator_y1 = MultipleLocator(0.1)
+minorLocator_y1 = MultipleLocator(0.05)
+ax1.yaxis.set_major_locator(majorLocator_y1)
+ax1.yaxis.set_minor_locator(minorLocator_y1)
+
+ax1.set_xlabel(r"$W1 - W2$")
+ax1.set_ylabel(r"$E(B-V)_{\rm Post}$") 
+
+
+# pos =         [left, bottom, width, height]
+ax1.set_position([0.17, 0.17, 0.77, 0.79])
+
+canvas = FigureCanvas(fig)
+canvas.print_figure(plot_dir + "W1_minus_W2_vs_ebv.pdf" , dpi=300)
+close("all")
 
 
 
 
 
+
+
+ebv_values_with_color = []
+ebv_errs_with_color = []
+hipp_minus_w1_color = []
+hipp_minus_w1_err = []
+sf_ebv_values = []
+sf_ebv_errs = []
+
+hipp_minus_w1_corrected_color = []
+hipp_minus_w1_corrected_err = []
+
+for m in range(len(all_names)):
+    current_name = all_names[m]
+    if ("hipp" in mags[current_name].keys()) and ("W1" in mags[current_name].keys()):
+        ebv_values_with_color.append(fitted_ebv_values[m])
+        ebv_errs_with_color.append(fitted_ebv_errs[m])
+        sf_ebv_values.append(ebv_color_excess["ebv"][m])
+        sf_ebv_errs.append(ebv_color_excess["ebv_err"][m])
+        hipp_minus_w1_color.append(mags[current_name]["hipp"][0] - mags[current_name]["W1"][0])
+        hipp_minus_w1_err.append((mags[current_name]["hipp"][1]**2 + mags[current_name]["W1"][1]**2)**0.5)
+        
+        
+        
+ebv_values_with_color = array(ebv_values_with_color)
+ebv_errs_with_color = array(ebv_errs_with_color)
+hipp_minus_w1_color = array(hipp_minus_w1_color)
+hipp_minus_w1_err = array(hipp_minus_w1_err)
+sf_ebv_values = array(sf_ebv_values)
+sf_ebv_errs = array(sf_ebv_errs)
+
+hipp_minus_w1_corrected_color = array(hipp_minus_w1_corrected_color)
+hipp_minus_w1_corrected_err = array(hipp_minus_w1_corrected_err)
+
+fig = plt.figure(figsize = (3.3, 2.5))
+ax1 = subplot(111)
+
+ax1.errorbar(hipp_minus_w1_color, ebv_values_with_color, ebv_errs_with_color, hipp_minus_w1_err, linestyle="none", marker="o", ms=3, color="red", alpha=0.5, label=r"${\rm vs}$ $E(B-V)_{\rm Post}$")
+ax1.errorbar(hipp_minus_w1_color, sf_ebv_values, sf_ebv_errs, hipp_minus_w1_err, linestyle="none", marker="o", ms=3, color="blue", alpha=0.5, label=r"${\rm vs}$ $E(B-V)_{\rm SF}$")
+
+
+# ax1.scatter(hipp_minus_w1_color, ebv_values_with_color, marker="o", s=3, color="red", alpha=0.5, label=r"${\rm vs}$ $E(B-V)_{\rm Post}$")
+# ax1.scatter(hipp_minus_w1_color, sf_ebv_values, marker="o", s=3, color="blue", alpha=0.5, label=r"${\rm vs}$ $E(B-V)_{\rm SF}$")
+
+# This code draws major and minor tick lines. Major ticks get number labels.
+majorLocator_x = MultipleLocator(0.2)
+minorLocator_x = MultipleLocator(0.1)
+ax1.xaxis.set_major_locator(majorLocator_x)
+ax1.xaxis.set_minor_locator(minorLocator_x)
+
+majorLocator_y1 = MultipleLocator(0.1)
+minorLocator_y1 = MultipleLocator(0.05)
+ax1.yaxis.set_major_locator(majorLocator_y1)
+ax1.yaxis.set_minor_locator(minorLocator_y1)
+
+ax1.set_xlabel(r"$hipp - W1$ (uncorrected)")
+ax1.set_ylabel(r"$E(B-V)$") 
+
+ax1.set_ylim(0, 0.45)
+ax1.set_xlim(0.8, 2.4)
+
+ax1.legend(loc="upper left", fontsize=10, numpoints=1, handletextpad=-0.2, labelspacing=0.2, scatterpoints=1)
+
+# pos =         [left, bottom, width, height]
+ax1.set_position([0.17, 0.190, 0.77, 0.79])
+
+canvas = FigureCanvas(fig)
+canvas.print_figure(plot_dir + "hipp_minus_W1_uncorrected_vs_ebv.pdf" , dpi=300)
+close("all")
+
+
+
+fig = plt.figure(figsize = (3.3, 2.5))
+ax1 = subplot(111)
+
+ax1.errorbar(hipp_minus_w1_color, ebv_values_with_color-sf_ebv_values, (sf_ebv_errs**2+ebv_errs_with_color**2)**0.5, hipp_minus_w1_err, linestyle="none", marker="o", ms=3, color="k", alpha=0.5)
+
+
+# This code draws major and minor tick lines. Major ticks get number labels.
+majorLocator_x = MultipleLocator(0.2)
+minorLocator_x = MultipleLocator(0.1)
+ax1.xaxis.set_major_locator(majorLocator_x)
+ax1.xaxis.set_minor_locator(minorLocator_x)
+
+majorLocator_y1 = MultipleLocator(0.1)
+minorLocator_y1 = MultipleLocator(0.05)
+ax1.yaxis.set_major_locator(majorLocator_y1)
+ax1.yaxis.set_minor_locator(minorLocator_y1)
+
+ax1.set_xlabel(r"$hipp - W1$ (uncorrected)")
+ax1.set_ylabel(r"$E(B-V)_{\rm Post} - E(B-V)_{\rm SF}$") 
+
+# ax1.set_ylim(0, 0.45)
+ax1.set_xlim(0.8, 2.4)
+
+# pos =         [left, bottom, width, height]
+ax1.set_position([0.17, 0.190, 0.77, 0.79])
+
+canvas = FigureCanvas(fig)
+canvas.print_figure(plot_dir + "hipp_minus_W1_uncorrected_vs_ebv_residual.pdf" , dpi=300)
+close("all")
