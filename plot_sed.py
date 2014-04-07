@@ -204,9 +204,9 @@ for n in range(len(band_list)):
 sigma_prediction_functions = []
 
 
-logper_grid_bounds = array([-0.55, -0.02])
+logper_grid_bounds = array([-0.73, 0.25])
 normed_logper_grid_bounds = logper_grid_bounds - log10(P_0)
-logper_grid = linspace(normed_logper_grid_bounds[0], normed_logper_grid_bounds[-1], 1000)
+logper_grid = linspace(normed_logper_grid_bounds[0], normed_logper_grid_bounds[-1], 2000)
 
 for band in band_list:
 
@@ -272,8 +272,10 @@ def load_kurucz_models(temp='7000', r=5, gravity="g25"):
 
     return wavelength_grid, ab_mag
 
+i_wavelength = 0.764
+z_wavelength = 0.906
 
-
+i_z_color_data = []
 
 spline_order = 3
 spline_smoothness = 0.05
@@ -291,6 +293,7 @@ ax1.plot(wavelength_grid, model_mag, color="gray", lw=0.5, alpha=1)
 
 # sed_period_list = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3]
 sed_period_list = [0.9, 0.75, 0.6, 0.45, 0.3]
+# sed_period_list = linspace(0.2, 0.9, 30)
 # sed_period_list = [0.53]
 for sed_period in sed_period_list:
     sed_mags = []
@@ -344,7 +347,7 @@ for sed_period in sed_period_list:
     
     
     tck = interpolate.splrep(log10(array(sed_wavelengths)), sed_mags, k=spline_order, s=spline_smoothness)
-    midline = ax1.plot(log_wavelength_grid, interpolate.splev(log_wavelength_grid,tck,der=0), label="P=%.2f" % sed_period)
+    midline = ax1.plot(log_wavelength_grid, interpolate.splev(log_wavelength_grid,tck,der=0), label="P=%.2f d" % sed_period)
     
     spline_fit_mags = interpolate.splev(log10(array(sed_wavelengths)),tck,der=0)
     
@@ -353,9 +356,22 @@ for sed_period in sed_period_list:
         
     ax1.fill_between(log_wavelength_grid, interpolate.splev(log_wavelength_grid,tck_up,der=0), interpolate.splev(log_wavelength_grid,tck_down,der=0), alpha=0.25, color=getp(midline[0], "color"))
     
+    i_mag = interpolate.splev(log10(i_wavelength),tck,der=0)
+    i_mag_ul = interpolate.splev(log10(i_wavelength),tck_up,der=0)
+    i_mag_ll = interpolate.splev(log10(i_wavelength),tck_down,der=0)
+    i_mag_err = 0.5*((i_mag_ul - i_mag) + (i_mag - i_mag_ll))
     
-
+    z_mag = interpolate.splev(log10(z_wavelength),tck,der=0)
+    z_mag_ul = interpolate.splev(log10(z_wavelength),tck_up,der=0)
+    z_mag_ll = interpolate.splev(log10(z_wavelength),tck_down,der=0)
+    z_mag_err = 0.5*((z_mag_ul - z_mag) + (z_mag - z_mag_ll))
     
+    i_minus_z = i_mag - z_mag
+    i_minus_z_err = (i_mag_err**2 + z_mag_err**2)**0.5
+    
+    print "period = %.2f\t(i-z) = %.3f +/- %.3f" % (sed_period,  i_minus_z, i_minus_z_err)
+    
+    i_z_color_data.append((sed_period,  i_minus_z, i_minus_z_err))
     
     # midline = ax1.plot(log10(array(sed_wavelengths)), sed_mags, label="P=%.1f" % sed_period)
     # ax1.fill_between(log10(array(sed_wavelengths)), array(sed_mags)+array(sed_mag_errs), array(sed_mags)-array(sed_mag_errs), alpha=0.25, color=getp(midline[0], "color"))
@@ -402,7 +418,24 @@ canvas.print_figure(plot_dir + "seds.pdf", dpi=300)
 close("all")
 
 
+sys.exit()
 
+i_z_color_data = array(i_z_color_data)
+savetxt("rrl_i_z_color_data.txt", i_z_color_data)
 
+from scipy import stats
+def fit_line(x, y):
+    slope, intercept, r, prob2, see = stats.linregress(x, y)
+    mx = x.mean()
+    sx2 = ((x-mx)**2).sum()
+    sd_intercept = see * sqrt(1./len(x) + mx*mx/sx2)
+    sd_slope = see * sqrt(1./sx2)
+    res = (intercept + slope*x) - y
+    return intercept, sd_intercept, slope, sd_slope
 
+errorbar(i_z_color_data[:,0][6:], i_z_color_data[:,1][6:], i_z_color_data[:,2][6:])
 
+intercept, sd_intercept, slope, sd_slope = fit_line(i_z_color_data[:,0][6:], i_z_color_data[:,1][6:])
+
+res = (intercept + slope*i_z_color_data[:,0][6:]) - i_z_color_data[:,1][6:]
+   
