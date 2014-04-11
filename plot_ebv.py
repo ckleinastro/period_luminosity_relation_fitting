@@ -4,12 +4,23 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib
 from matplotlib.ticker import MaxNLocator
-from numpy import array, log10, loadtxt, exp, arange
+from numpy import array, log10, loadtxt, exp, arange, hypot
 from scipy import interpolate
 
 import sys
 
 plot_dir = "plots/"
+
+rzcep_b = 5.501252759250636
+rzcep_l = 109.46976666024584
+rzcep_sf_ebv = 0.9054
+rzcep_sf_ebv_err = 0.0148
+
+rzcep_mu = 8.0397
+rzcep_mu_err = 0.0123
+rzcep_ebv =  0.2461
+rzcep_ebv_err = 0.0089
+
 
 band_list =              ["U",  "B", "hipp",  "V",  "R",  "I",  "z",  "J", "H", "K", "W1", "W2", "W3"]
 plot_mag_offsets_list = [-6.1, -5.0,   -4.3, -3.6, -2.9, -2.2, -2.1, -0.8, 0.0, 0.5,  1.1,  1.6,  2.2]
@@ -212,12 +223,23 @@ galactic_longitudes = array(galactic_longitudes)
 
 
 
+"""
+rzcep_b = 5.501252759250636
+rzcep_l = 109.46976666024584
+rzcep_sf_ebv = 0.9054
+rzcep_sf_ebv_err = 0.0148
+
+rzcep_mu = 8.0397
+rzcep_mu_err = 0.0123
+rzcep_ebv =  0.2461
+rzcep_ebv_err = 0.0089
+"""
+
+
+
 
 fig = plt.figure(figsize = (3.3, 2.5))
 ax1 = subplot(111)
-
-
-
 
 ebv_residual = fitted_ebv_values - ebv_color_excess["ebv"]
 
@@ -225,29 +247,35 @@ ebv_residual_error = sqrt(fitted_ebv_errs**2 + ebv_color_excess["ebv_err"]**2)
 
 ax1.errorbar(abs(galactic_latitudes), ebv_residual, ebv_residual_error, linestyle="none", marker="o", ms=3, color="k")
 
+ax1.errorbar(rzcep_b, rzcep_ebv-rzcep_sf_ebv, hypot(rzcep_ebv_err, rzcep_sf_ebv_err), linestyle="none", marker="o", ms=3, color="green")
+
 # This code draws major and minor tick lines. Major ticks get number labels.
 majorLocator_x = MultipleLocator(10)
 minorLocator_x = MultipleLocator(5)
 ax1.xaxis.set_major_locator(majorLocator_x)
 ax1.xaxis.set_minor_locator(minorLocator_x)
 
-majorLocator_y1 = MultipleLocator(0.1)
-minorLocator_y1 = MultipleLocator(0.05)
+majorLocator_y1 = MultipleLocator(0.2)
+minorLocator_y1 = MultipleLocator(0.1)
 ax1.yaxis.set_major_locator(majorLocator_y1)
 ax1.yaxis.set_minor_locator(minorLocator_y1)
 
 ax1.set_xlabel(r"$|b|$ [deg]")
 ax1.set_ylabel(r"$E(B-V)_{\rm Post} - E(B-V)_{\rm SF}$") 
 
+ax1.set_ylim(-0.7, 0.175)
+
 text_string = r"At $b>30$ deg, the posterior"
 text_string_2 = r"$E(B-V)$ is $%.3f$ ($\pm %.3f$)" % (mean(ebv_residual[abs(galactic_latitudes)>30]), std(ebv_residual[abs(galactic_latitudes)>30]))
 text_string_3 = r"larger than the prior SF value." 
-vspacing = 0.03
+vspacing = 0.07
 ax1.text(25, -0.14, text_string, fontsize=10, ha='left', va='top')
 ax1.text(25, -0.14-vspacing, text_string_2, fontsize=10, ha='left', va='top')
 ax1.text(25, -0.14-2*vspacing, text_string_3, fontsize=10, ha='left', va='top')
 
-
+ax1.annotate("RZCep", (rzcep_b+2.0, rzcep_ebv-rzcep_sf_ebv + 0.01), fontsize=10,
+                             xytext=(rzcep_b+6, (rzcep_ebv-rzcep_sf_ebv)+0.06), horizontalalignment="left",
+                             arrowprops=dict(linewidth=0, facecolor='green', width=2, frac=0.3, headwidth=7, shrink=0.05))
 
 # pos =         [left, bottom, width, height]
 ax1.set_position([0.19, 0.195, 0.77, 0.79])
@@ -556,15 +584,36 @@ axsizes_array = ((1.0/axsizes_mus) - (1.0/post_mus).min()) * (100/max((1.0/post_
 
 
 
+"""
+rzcep_b = 5.501252759250636
+rzcep_l = 109.46976666024584
+rzcep_sf_ebv = 0.9054
+rzcep_sf_ebv_err = 0.0148
 
+rzcep_mu = 8.0397
+rzcep_mu_err = 0.0123
+rzcep_ebv =  0.2461
+rzcep_ebv_err = 0.0089
+"""
 
-
+rzcep_marker_size = ((1.0/rzcep_mu) - (1.0/post_mus).min()) * (100/max((1.0/post_mus) - (1.0/post_mus).min())) + 5
+rzcep_marker_color = make_color_rb( (rzcep_ebv-fitted_ebv_values.min())/(fitted_ebv_values.max()-fitted_ebv_values.min())    ) 
 
 fig = plt.figure(figsize = (3.3, 2.7))
 ax1 = subplot(311, projection = "aitoff")
-ax1.scatter(radians(galactic_longitudes), radians(galactic_latitudes), marker="o", color=color_array, alpha=1.0, s=sizes_array, linewidth=0.5, edgecolor='black')
 
 ax1.grid(True)
+
+ax1.scatter(radians(galactic_longitudes), radians(galactic_latitudes), marker="o", color=color_array, alpha=1.0, s=sizes_array, linewidth=0.5, edgecolor='black')
+
+ax1.scatter(radians(rzcep_l), radians(rzcep_b), marker="o", color=rzcep_marker_color, alpha=1.0, s=rzcep_marker_size, linewidth=2.5, edgecolor='green')
+ax1.scatter(radians(rzcep_l), radians(rzcep_b), marker="o", color=rzcep_marker_color, alpha=1.0, s=rzcep_marker_size, linewidth=0.5, edgecolor='black')
+
+
+ax1.annotate("RZCep", (radians(rzcep_l+9), radians(rzcep_b)), fontsize=10,
+                             xytext=(radians(rzcep_l+22), radians(rzcep_b)), ha="left", va="center",
+                             arrowprops=dict(linewidth=0, facecolor='green', width=2, frac=0.3, headwidth=7, shrink=0.05))
+
 
 yticks = ax1.yaxis.get_major_ticks()
 for y_tick_label in yticks:
