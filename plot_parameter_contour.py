@@ -16,7 +16,7 @@ band_list =              ["U",  "B", "hipp",  "V",  "R",  "I",  "z",  "J", "H", 
 
 P_0 = 0.52853966619770265
 
-data_dir = "/Volumes/Extra_HDD/Research/Multiband_PLR_Fitting/lowexpandedEBV_trace_data/"
+data_dir = "/Volumes/ExtraHDD/Research/Multiband_PLR_Fitting/lowexpandedEBV_trace_data/"
 plr_db_prefix = "M_lowexpandedEBV"
 # Removed "7" and "9" because they don't converge until well into the analysis period of the trace
 trace_run_nums = [1, 2, 3, 4, 5, 6, 8] 
@@ -162,9 +162,9 @@ for band in ["W3"]:
     
     
     
-    axHistx.hist(full_M_0_trace, bins=100, normed=False, histtype="stepfilled", color="gray", alpha=1.0)
+    axHistx.hist(full_M_0_trace, bins=100, range=axScatter.get_xlim(), normed=False, histtype="stepfilled", color="gray", alpha=1.0)
     
-    axHisty.hist(full_alpha_trace, bins=100, normed=False, histtype="stepfilled", orientation="horizontal", color="gray", alpha=1.0)
+    axHisty.hist(full_alpha_trace, bins=100, range=axScatter.get_ylim(),  normed=False, histtype="stepfilled", orientation="horizontal", color="gray", alpha=1.0)
     
     axHistx.set_ylabel("Count")
     axHisty.set_xlabel("Count")

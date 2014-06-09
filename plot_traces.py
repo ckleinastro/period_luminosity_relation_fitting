@@ -202,6 +202,9 @@ def compute_gr_diagnostic_plot(all_traces_array, window_size=10000):
         current_index += window_size
     return index_list, gr_diagnostic
 
+
+sys.exit()
+
 for n in range(len(plot_names)):
 
     fig = plt.figure(figsize=(7, 1.75))

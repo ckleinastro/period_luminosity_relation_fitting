@@ -241,6 +241,8 @@ rzcep_ebv_err = 0.0089
 fig = plt.figure(figsize = (3.3, 2.5))
 ax1 = subplot(111)
 
+ax1.hlines(0, 0, 90, linestyle="dashed", color="gray")
+
 ebv_residual = fitted_ebv_values - ebv_color_excess["ebv"]
 
 ebv_residual_error = sqrt(fitted_ebv_errs**2 + ebv_color_excess["ebv_err"]**2)
@@ -260,13 +262,18 @@ minorLocator_y1 = MultipleLocator(0.1)
 ax1.yaxis.set_major_locator(majorLocator_y1)
 ax1.yaxis.set_minor_locator(minorLocator_y1)
 
+
+
 ax1.set_xlabel(r"$|b|$ [deg]")
 ax1.set_ylabel(r"$E(B-V)_{\rm Post} - E(B-V)_{\rm SF}$") 
 
 ax1.set_ylim(-0.7, 0.175)
 
+mean_ebv_sigma = (1.0/sum((1.0/ebv_residual_error[abs(galactic_latitudes)>30])**2.0))**0.5
+
+
 text_string = r"At $b>30$ deg, the posterior"
-text_string_2 = r"$E(B-V)$ is $%.3f$ ($\pm %.3f$)" % (mean(ebv_residual[abs(galactic_latitudes)>30]), std(ebv_residual[abs(galactic_latitudes)>30]))
+text_string_2 = r"$E(B-V)$ is $%.3f$ ($\pm %.3f$)" % (mean(ebv_residual[abs(galactic_latitudes)>30]), mean_ebv_sigma)
 text_string_3 = r"larger than the prior SF value." 
 vspacing = 0.07
 ax1.text(25, -0.14, text_string, fontsize=10, ha='left', va='top')
@@ -284,8 +291,12 @@ canvas = FigureCanvas(fig)
 canvas.print_figure(plot_dir + "EBV_residual.pdf" , dpi=300)
 close("all")
 
-print "At b>30 deg, the fitted E(B-V) is %.4f (+/-%.4f) larger than the prior SF value." % (mean(ebv_residual[abs(galactic_latitudes)>30]), std(ebv_residual[abs(galactic_latitudes)>30]))
 
+print "At b>30 deg, the fitted E(B-V) is %.4f (+/-%.4f) larger than the prior SF value, with scatter about the mean of %.4f." % (mean(ebv_residual[abs(galactic_latitudes)>30]), mean_ebv_sigma, std(ebv_residual[abs(galactic_latitudes)>30]))
+
+ebv_residual_error[abs(galactic_latitudes)>30]
+
+sys.exit()
 
 
 def ccm_extinction_law(wavelength):

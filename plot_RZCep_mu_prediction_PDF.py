@@ -18,7 +18,8 @@ hst_mu_err = 0.17
 hipp_mu = 11.34
 hipp_mu_err = 2.86
 
-gaia_mu_err = 0.021715 # 1 per cent fractional distance error
+# gaia_mu_err = 0.021715 # 1 per cent fractional distance error
+gaia_mu_err = 0.012329  # 0.567721 per cent fractional distance error
 
 rcParams['axes.unicode_minus'] = False
 matplotlib.rc('font', family="serif")
@@ -78,7 +79,7 @@ ax1.annotate("Hipparcos\nParallax", (8.15, 0.3),
                                     arrowprops=dict(linewidth=0, facecolor='red', width=2, frac=0.15, headwidth=7, shrink=0.05))
 
 
-ax1.annotate("GAIA\nError", (rzcep_mu+0.025, stats.norm.pdf(rzcep_mu, loc=rzcep_mu, scale=rzcep_mu_err)*0.60653065971263342), 
+ax1.annotate("Gaia\nError", (rzcep_mu+0.025, stats.norm.pdf(rzcep_mu, loc=rzcep_mu, scale=rzcep_mu_err)*0.60653065971263342), 
     xytext=(rzcep_mu+0.08, stats.norm.pdf(rzcep_mu, loc=rzcep_mu, scale=rzcep_mu_err)*0.60653065971263342-2.5), 
     arrowprops=dict(linewidth=0, facecolor='purple', width=2, frac=0.2, headwidth=7, shrink=0.05))
 

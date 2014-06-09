@@ -4,7 +4,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib
 from numpy import array
-
+from scipy import stats
 import sys
 
 plot_dir = "plots/"
@@ -118,6 +118,13 @@ lower = 1-((10**((-mu_post_err+5)/5))/10)
 fractional_distance_errs = (upper + lower)/2
 
 print "Average fractional distance error is %.2f%% (+/- %.3f%%)" % (100*fractional_distance_errs.mean(), 100*fractional_distance_errs.std())
+
+a = (mu_post-mu_prior)/hypot(mu_post_err, mu_prior_err)
+W, p = stats.shapiro(a)
+print W, p
+
+D, p = stats.kstest(a, "norm", N=100)
+print D, p
 
 
 fig = plt.figure(figsize=(3.3, 4.5))

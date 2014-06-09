@@ -54,7 +54,7 @@ band_wavelengths = {    "U":0.3663,
 
 P_0 = 0.52853966619770265
 
-data_dir = "/Volumes/Extra_HDD/Research/Multiband_PLR_Fitting/lowexpandedEBV_trace_data/"
+data_dir = "/Volumes/ExtraHDD/Research/Multiband_PLR_Fitting/lowexpandedEBV_trace_data/"
 plr_db_prefix = "M_lowexpandedEBV"
 # Removed "7" and "9" because they don't converge until well into the analysis period of the trace
 trace_run_nums = [1, 2, 3, 4, 5, 6, 8] 
@@ -295,6 +295,8 @@ ax1.plot(wavelength_grid, model_mag, color="gray", lw=0.5, alpha=1)
 sed_period_list = [0.9, 0.75, 0.6, 0.45, 0.3]
 # sed_period_list = linspace(0.2, 0.9, 30)
 # sed_period_list = [0.53]
+rrl_spectra_flux = []
+rrl_spectra_angstroms = []
 for sed_period in sed_period_list:
     sed_mags = []
     sed_mag_errs = []
@@ -350,6 +352,12 @@ for sed_period in sed_period_list:
     midline = ax1.plot(log_wavelength_grid, interpolate.splev(log_wavelength_grid,tck,der=0), label="P=%.2f d" % sed_period)
     
     spline_fit_mags = interpolate.splev(log10(array(sed_wavelengths)),tck,der=0)
+    
+    dense_spline_fit_mags = interpolate.splev(log10(linspace(sed_wavelengths[0], sed_wavelengths[-1], 10000)),tck,der=0)
+    spline_fnu = 3631. * (10**(dense_spline_fit_mags/(-2.5)))
+    sed_angstroms = linspace(sed_wavelengths[0], sed_wavelengths[-1], 10000) * 10000
+    rrl_spectra_flux.append(spline_fnu)
+    rrl_spectra_angstroms.append(sed_angstroms)
     
     tck_up = interpolate.splrep(log10(array(sed_wavelengths)), spline_fit_mags+array(sed_mag_errs), k=spline_order, s=0.00)
     tck_down = interpolate.splrep(log10(array(sed_wavelengths)), spline_fit_mags-array(sed_mag_errs), k=spline_order, s=0.00)
@@ -417,6 +425,24 @@ canvas = FigureCanvas(fig)
 canvas.print_figure(plot_dir + "seds.pdf", dpi=300)
 close("all")
 
+rrl_radii = linspace(7, 4, len(sed_period_list))
+d = 10 * 3.08568025e18 # 10 pc in cm
+for n in range(len(sed_period_list)):
+    period = sed_period_list[n]
+    wavelengths = rrl_spectra_angstroms[n]
+    radius = rrl_radii[n] * 69599000000 # R_sol in cm
+    fnu = rrl_spectra_flux[n] / ((radius/d)**2)
+    flam = fnu / ((3.34e4)*(wavelengths**2))  # flux units erg/s/cm^2/A, also called FLAM
+    # plot(wavelengths, flam)
+    # plot(wavelengths, fnu)
+    output_file = file("rrl_p" + str(period).split(".")[1] + "_fnu_spec.txt", "w")
+    for m in range(len(wavelengths)):
+        output_file.write(str(wavelengths[m]) + "\t" + str(fnu[m]) + "\n")
+    output_file.close()
+    
+
+# plot(high_p_model_grid, high_p_model_flam)
+# plot(low_p_model_grid, low_p_model_flam)
 
 sys.exit()
 
